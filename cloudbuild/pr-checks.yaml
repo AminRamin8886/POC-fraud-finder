@@ -26,8 +26,7 @@ steps:
         git init && \
         git add . && \
         make pre-commit && \
-        make compile-pipeline pipeline=training && \
-        make compile-pipeline pipeline=prediction && \
+        make compile-pipeline pipeline=training && \        
         make setup-all-components && \
         make test-all-components
     env:

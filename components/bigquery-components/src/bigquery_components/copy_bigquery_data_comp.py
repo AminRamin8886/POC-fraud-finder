@@ -27,16 +27,8 @@ def copy_bigquery_data_comp(
     """
     Run query & create a new BigQuery table
     Args:
-        query (str): SQL query to execute, results are saved in a BigQuery table
-        bq_client_project_id (str): project id that will be used by the bq client
-        destination_project_id (str): project id where BQ table will be created
-        dataset_id (str): dataset id where BQ table will be created
-        table_id (str): table name (without project id and dataset id)
-        dataset_location (str): bq dataset location
-        query_job_config (dict): dict containing optional parameters
-        required by the bq query operation. No need to specify destination param
-        See available parameters here
-        https://googleapis.dev/python/bigquery/latest/generated/google.cloud.bigquery.job.QueryJobConfig.html
+        bucket_name (str): bucket to store the data
+        destination_project_id (str): project id where BQ table will be created        
     Returns:
         None
     """

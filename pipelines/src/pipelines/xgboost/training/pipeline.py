@@ -16,15 +16,30 @@ import json
 import os
 import pathlib
 
+import random
+import string
+
+import datetime as dt
+import json
+import os
+import random
+import sys
+import time
+from datetime import datetime, timedelta
+from typing import List, Union
+
+
 from kfp.v2 import compiler, dsl
 from pipelines import generate_query
-from bigquery_components import copy_bigquery_data_comp, extract_bq_to_dataset
+from bigquery_components import ingest_features_gcs, evaluate_model, copy_bigquery_data_comp, extract_bq_to_dataset, feature_engineering_comp
 from vertex_components import (
     lookup_model,
     custom_train_job,
     import_model_evaluation,
     update_best_model,
 )
+from google_cloud_pipeline_components import aiplatform as vertex_ai_components
+
 
 
 @dsl.pipeline(name="xgboost-train-pipeline")
@@ -90,6 +105,62 @@ def xgboost_pipeline(
         label=label_column_name,
     )
 
+   
+    ID = "".join(random.choices(string.ascii_lowercase + string.digits, k=5))
+    FEATURESTORE_ID = "fraudfinder_{ID}"
+    YESTERDAY = datetime.today() - timedelta(days=1)
+    YEAR_MONTH_PREFIX = YESTERDAY.strftime("%Y-%m")
+    DATAPROCESSING_START_DATE = (YESTERDAY - timedelta(days=10)).strftime("%Y-%m-%d")
+    DATAPROCESSING_END_DATE = YESTERDAY.strftime("%Y-%m-%d")
+
+    # Define BiqQuery dataset and tables to calculate features.
+    RAW_BQ_TRANSACTION_TABLE_URI = f"{project_id}.tx.tx"
+    RAW_BQ_LABELS_TABLE_URI = f"{project_id}.tx.txlabels"
+    FEATURES_BQ_TABLE_URI = f"{project_id}.tx.wide_features_table"
+
+    # Define Vertex AI Feature store settings.
+    CUSTOMERS_TABLE_NAME = f"customers_{DATAPROCESSING_END_DATE.replace('-', '')}"
+    CUSTOMERS_BQ_TABLE_URI = f"{project_id}.tx.{CUSTOMERS_TABLE_NAME}"
+    TERMINALS_TABLE_NAME = f"terminals_{DATAPROCESSING_END_DATE.replace('-', '')}"                    
+    TERMINALS_BQ_TABLE_URI = f"{project_id}.tx.{TERMINALS_TABLE_NAME}"
+    ONLINE_STORAGE_NODES = 1
+    FEATURE_TIME = "feature_ts"
+    CUSTOMER_ENTITY_ID = "customer"
+    TERMINAL_ENTITY_ID = "terminal"
+
+    # Feature Store component variables
+    BQ_DATASET = "tx"
+    READ_INSTANCES_TABLE = f"ground_truth_{ID}"
+    READ_INSTANCES_URI = f"bq://{project_id}.{BQ_DATASET}.{READ_INSTANCES_TABLE}"
+
+    # Dataset component variables
+    DATASET_NAME = f"fraud_finder_dataset_{ID}"
+    
+    # Training component variables
+    JOB_NAME = f"fraudfinder-train-xgb-{ID}"
+    MODEL_NAME = f"{MODEL_NAME}_xgb_pipeline_{ID}"
+    CONTAINER_URI = "us-docker.pkg.dev/vertex-ai/training/xgboost-cpu.1-1:latest"
+    MODEL_SERVING_IMAGE_URI = (
+        "us-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-1:latest"
+    )
+    ARGS = json.dumps(["--bucket", f"gs://{staging_bucket}"])
+    IMAGE_REPOSITORY = f"fraudfinder-{ID}"
+    IMAGE_NAME = "dask-xgb-classificator"
+    IMAGE_TAG = "v1"
+    IMAGE_URI = f"us-central1-docker.pkg.dev/{project_id}/{IMAGE_REPOSITORY}/{IMAGE_NAME}:{IMAGE_TAG}"  # TODO: get it from config
+
+    # Evaluation component variables
+    METRICS_URI = f"gs://{BUCKET_NAME}/deliverables/metrics.json"
+    AVG_PR_THRESHOLD = 0.2
+    AVG_PR_CONDITION = "avg_pr_condition"
+
+
+    replica_count = 1
+    machine_type = "n1-standard-4"
+    train_split = 0.8
+    test_split = 0.1
+    val_split = 0.1
+
     # generate sql queries which are used in ingestion and preprocessing
     # operations
 
@@ -103,11 +174,71 @@ def xgboost_pipeline(
         destination_project_id=project_id,
         dataset_id=dataset_id,
         dataset_location=dataset_location,
-        query_job_config=json.dumps(dict(write_disposition="WRITE_TRUNCATE")),
+        query_job_config=json.dumps(dict(write_disposition="WRITE_TRUNCATE"))
     )
     ingest = copy_bigquery_data_comp(
-        bucket_name=staging_bucket, destination_project_id=project_id, **kwargs
+        staging_bucket, project_id,        
+        **kwargs
     ).set_display_name("Ingest data")
+
+    featurestore  = (
+        feature_engineering_comp( project_id, project_location, staging_bucket,
+        FEATURESTORE_ID,
+        DATAPROCESSING_END_DATE,    
+        RAW_BQ_TRANSACTION_TABLE_URI,
+        RAW_BQ_LABELS_TABLE_URI,    
+        CUSTOMERS_BQ_TABLE_URI,
+        TERMINALS_BQ_TABLE_URI,
+        ONLINE_STORAGE_NODES ,
+        FEATURE_TIME,
+        CUSTOMER_ENTITY_ID,
+        TERMINAL_ENTITY_ID, **kwargs)
+        .after(ingest)
+        .set_display_name("Create Feature Store")
+    )
+
+
+
+
+     # Ingest data from featurestore
+    ingest_features_op = ingest_features_gcs(
+        project_id=project_id,
+        region=project_location,
+        bucket_name=staging_bucket,
+        feature_store_id=FEATURESTORE_ID,
+        read_instances_uri=READ_INSTANCES_URI,
+    )
+
+    # create dataset
+    dataset_create_op = vertex_ai_components.TabularDatasetCreateOp(
+        project=project_id,
+        display_name=DATASET_NAME,
+        gcs_source=ingest_features_op.outputs["snapshot_uri_paths"],
+    ).after(ingest_features_op)
+
+    # custom training job component - script
+    train_model_op = vertex_ai_components.CustomContainerTrainingJobRunOp(
+        display_name=JOB_NAME,
+        model_display_name=MODEL_NAME,
+        container_uri=IMAGE_URI,
+        staging_bucket=staging_bucket,
+        dataset=dataset_create_op.outputs["dataset"],
+        base_output_dir=staging_bucket,
+        args=ARGS,
+        replica_count=replica_count,
+        machine_type=machine_type,
+        training_fraction_split=train_split,
+        validation_fraction_split=val_split,
+        test_fraction_split=test_split,
+        model_serving_container_image_uri=MODEL_SERVING_IMAGE_URI,
+        project=project_id,
+        location=project_location,
+    ).after(dataset_create_op)
+
+    # evaluate component
+    evaluate_model_op = evaluate_model(
+        model_in=train_model_op.outputs["model"], metrics_uri=METRICS_URI
+    ).after(train_model_op)
 
     # split_train_data = (
     #     bq_query_to_table(query=split_train_query, table_id=train_table, **kwargs)
