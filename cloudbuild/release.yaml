@@ -16,7 +16,7 @@ steps:
 
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/fraudfinder-$PROJECT_ID/dask-xgb-classificator:latest', '/pipelines/pipelines/$_PIPELINE_TEMPLATE/training/assets']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/fraudfinder-$PROJECT_ID/dask-xgb-classificator:latest', '/pipelines/src/pipelines/$_PIPELINE_TEMPLATE/training/assets']
   # Install pipenv, install deps, compile pipelines
   - name: python:3.7
     entrypoint: /bin/sh
