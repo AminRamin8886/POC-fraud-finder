@@ -144,9 +144,9 @@ def xgboost_pipeline(
         "us-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-1:latest"
     )
     ARGS = json.dumps(["--bucket", f"gs://{staging_bucket}"])
-    IMAGE_REPOSITORY = f"fraudfinder-{ID}"
+    IMAGE_REPOSITORY = f"fraudfinder-{project_id}"
     IMAGE_NAME = "dask-xgb-classificator"
-    IMAGE_TAG = "v1"
+    IMAGE_TAG = "latest"
     IMAGE_URI = f"us-central1-docker.pkg.dev/{project_id}/{IMAGE_REPOSITORY}/{IMAGE_NAME}:{IMAGE_TAG}"  # TODO: get it from config
 
     # Evaluation component variables
