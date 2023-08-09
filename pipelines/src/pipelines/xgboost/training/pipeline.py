@@ -179,10 +179,15 @@ def xgboost_pipeline(
     #     query_job_config=json.dumps(dict(write_disposition="WRITE_TRUNCATE"))
     # )
 
-    
     ingest = copy_bigquery_data_comp(
         bucket_name=staging_bucket, destination_project_id=project_id
     ).set_display_name("Ingest data")
+
+    import logging
+    logging.getLogger().setLevel(logging.INFO)
+    logmsg = f"Project location = {project_location}"
+
+    logging.info(logmsg)
 
     featurestore = (
         feature_engineering_comp(
@@ -196,9 +201,6 @@ def xgboost_pipeline(
             CUSTOMERS_BQ_TABLE_URI=CUSTOMERS_BQ_TABLE_URI,
             TERMINALS_BQ_TABLE_URI=TERMINALS_BQ_TABLE_URI,
             ONLINE_STORAGE_NODES=ONLINE_STORAGE_NODES,
-            FEATURE_TIME=FEATURE_TIME,
-            CUSTOMER_ENTITY_ID=CUSTOMER_ENTITY_ID,
-            TERMINAL_ENTITY_ID=TERMINAL_ENTITY_ID,
         )
         .after(ingest)
         .set_display_name("Create Feature Store")
