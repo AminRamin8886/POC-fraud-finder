@@ -23,7 +23,7 @@ pre-commit: ## Runs the pre-commit checks over entire repo
 	pipenv run pre-commit run --all-files
 
 setup: ## Set up local environment for Python development on pipelines
-	@pip install pipenv pandas && \
+	@pip install pipenv && \
 	cd pipelines && \
 	pipenv install --dev
 
