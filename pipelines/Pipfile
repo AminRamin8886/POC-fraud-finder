@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+pandas = "==0.24.1"
 kfp = "==1.8.21"
 google-cloud-aiplatform = "==1.24.1"
 google-cloud-pipeline-components = "==1.0.42"
