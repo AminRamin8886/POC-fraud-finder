@@ -28,7 +28,7 @@ from google.cloud.aiplatform import EntityType, Feature, Featurestore
 )
 def feature_engineering_comp(         
     destination_project_id: str,
-    REGION: str,
+    REGION_NM: str,
     BUCKET_NAME: str,
     FEATURESTORE_ID: str,
     DATAPROCESSING_END_DATE: str ,    
@@ -73,7 +73,7 @@ def feature_engineering_comp(
         create_real_time_features(CUSTOMERS_BQ_TABLE_URI, TERMINALS_BQ_TABLE_URI)
         logging.info(f"Done create_real_time_features")
 
-        create_featurestore(destination_project_id, REGION, BUCKET_NAME,
+        create_featurestore(destination_project_id, REGION_NM, BUCKET_NAME,
         FEATURESTORE_ID, ONLINE_STORAGE_NODES, CUSTOMER_ENTITY_ID, TERMINAL_ENTITY_ID,
         CUSTOMERS_BQ_TABLE_URI, FEATURE_TIME, TERMINALS_BQ_TABLE_URI)
         logging.info(f"Done create_featurestore")

@@ -187,7 +187,7 @@ def xgboost_pipeline(
     featurestore = (
         feature_engineering_comp(
             destination_project_id=project_id,
-            REGION=project_location,
+            REGION_NM=project_location,
             BUCKET_NAME=staging_bucket,
             FEATURESTORE_ID=FEATURESTORE_ID,
             DATAPROCESSING_END_DATE=DATAPROCESSING_END_DATE,
