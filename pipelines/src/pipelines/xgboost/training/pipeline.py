@@ -138,7 +138,7 @@ def xgboost_pipeline(
     
     # Training component variables
     JOB_NAME = f"fraudfinder-train-xgb-{ID}"
-    MODEL_NAME = f"{MODEL_NAME}_xgb_pipeline_{ID}"
+    MODEL_NAME = f"ff_model_xgb_pipeline_{ID}"
     CONTAINER_URI = "us-docker.pkg.dev/vertex-ai/training/xgboost-cpu.1-1:latest"
     MODEL_SERVING_IMAGE_URI = (
         "us-docker.pkg.dev/vertex-ai/prediction/xgboost-cpu.1-1:latest"
