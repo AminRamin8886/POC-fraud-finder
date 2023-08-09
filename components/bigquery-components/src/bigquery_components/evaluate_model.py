@@ -4,8 +4,19 @@ from typing import NamedTuple
 
 from kfp.v2 import dsl
 from kfp.v2.dsl import (   
-    component
+    Artifact,
+    Dataset,
+    Input,
+    InputPath,
+    Model,
+    Output,
+    OutputPath,
+    Metrics,
+    ClassificationMetrics,
+    Condition,
+    component,
 )
+ 
 
 
 from google.cloud import aiplatform as vertex_ai
