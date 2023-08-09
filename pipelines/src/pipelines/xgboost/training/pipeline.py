@@ -150,7 +150,7 @@ def xgboost_pipeline(
     IMAGE_URI = f"us-central1-docker.pkg.dev/{project_id}/{IMAGE_REPOSITORY}/{IMAGE_NAME}:{IMAGE_TAG}"  # TODO: get it from config
 
     # Evaluation component variables
-    METRICS_URI = f"gs://{BUCKET_NAME}/deliverables/metrics.json"
+    METRICS_URI = f"gs://{staging_bucket}/deliverables/metrics.json"
     AVG_PR_THRESHOLD = 0.2
     AVG_PR_CONDITION = "avg_pr_condition"
 
