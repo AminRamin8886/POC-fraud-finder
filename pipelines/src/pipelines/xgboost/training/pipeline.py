@@ -169,17 +169,16 @@ def xgboost_pipeline(
     
     # data ingestion and preprocessing operations
 
-    kwargs = dict(
-        bq_client_project_id=project_id,
-        destination_project_id=project_id,
-        dataset_id=dataset_id,
-        dataset_location=dataset_location,
-        query_job_config=json.dumps(dict(write_disposition="WRITE_TRUNCATE"))
-    )
+    # kwargs = dict(
+    #     bq_client_project_id=project_id,
+    #     destination_project_id=project_id,
+    #     dataset_id=dataset_id,
+    #     dataset_location=dataset_location,
+    #     query_job_config=json.dumps(dict(write_disposition="WRITE_TRUNCATE"))
+    # )
     ingest = copy_bigquery_data_comp(
-        staging_bucket, project_id,        
-        **kwargs
-    ).set_display_name("Ingest data")
+        staging_bucket, project_id
+        ).set_display_name("Ingest data")
 
     featurestore  = (
         feature_engineering_comp( project_id, project_location, staging_bucket,
@@ -192,7 +191,7 @@ def xgboost_pipeline(
         ONLINE_STORAGE_NODES ,
         FEATURE_TIME,
         CUSTOMER_ENTITY_ID,
-        TERMINAL_ENTITY_ID, **kwargs)
+        TERMINAL_ENTITY_ID)
         .after(ingest)
         .set_display_name("Create Feature Store")
     )
