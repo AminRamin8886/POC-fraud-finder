@@ -33,7 +33,8 @@ from kfp.v2 import compiler, dsl
 from pipelines import generate_query
 from bigquery_components import (
     ingest_features_gcs,
-    evaluate_model,    
+    evaluate_model,
+    copy_bigquery_data_comp,
     extract_bq_to_dataset,
     feature_engineering_comp,
 )
@@ -166,7 +167,7 @@ def xgboost_pipeline(
     # generate sql queries which are used in ingestion and preprocessing
     # operations
 
-    # queries_folder = pathlib.Path(__file__).parent / "queries"
+    queries_folder = pathlib.Path(__file__).parent / "queries"
 
     # data ingestion and preprocessing operations
 
@@ -178,26 +179,30 @@ def xgboost_pipeline(
     #     query_job_config=json.dumps(dict(write_disposition="WRITE_TRUNCATE"))
     # )
 
- 
-    # featurestore = (
-    #     feature_engineering_comp(
-    #         destination_project_id=project_id,
-    #         REGION=project_location,
-    #         BUCKET_NAME=staging_bucket,
-    #         FEATURESTORE_ID=FEATURESTORE_ID,
-    #         DATAPROCESSING_END_DATE=DATAPROCESSING_END_DATE,
-    #         RAW_BQ_TRANSACTION_TABLE_URI=RAW_BQ_TRANSACTION_TABLE_URI,
-    #         RAW_BQ_LABELS_TABLE_URI=RAW_BQ_LABELS_TABLE_URI,
-    #         CUSTOMERS_BQ_TABLE_URI=CUSTOMERS_BQ_TABLE_URI,
-    #         TERMINALS_BQ_TABLE_URI=TERMINALS_BQ_TABLE_URI,
-    #         ONLINE_STORAGE_NODES=ONLINE_STORAGE_NODES,
-    #         FEATURE_TIME=FEATURE_TIME,
-    #         CUSTOMER_ENTITY_ID=CUSTOMER_ENTITY_ID,
-    #         TERMINAL_ENTITY_ID=TERMINAL_ENTITY_ID,
-    #     )
-    #     .after(ingest)
-    #     .set_display_name("Create Feature Store")
-    # )
+    
+    ingest = copy_bigquery_data_comp(
+        bucket_name=staging_bucket, destination_project_id=project_id
+    ).set_display_name("Ingest data")
+
+    featurestore = (
+        feature_engineering_comp(
+            destination_project_id=project_id,
+            REGION=project_location,
+            BUCKET_NAME=staging_bucket,
+            FEATURESTORE_ID=FEATURESTORE_ID,
+            DATAPROCESSING_END_DATE=DATAPROCESSING_END_DATE,
+            RAW_BQ_TRANSACTION_TABLE_URI=RAW_BQ_TRANSACTION_TABLE_URI,
+            RAW_BQ_LABELS_TABLE_URI=RAW_BQ_LABELS_TABLE_URI,
+            CUSTOMERS_BQ_TABLE_URI=CUSTOMERS_BQ_TABLE_URI,
+            TERMINALS_BQ_TABLE_URI=TERMINALS_BQ_TABLE_URI,
+            ONLINE_STORAGE_NODES=ONLINE_STORAGE_NODES,
+            FEATURE_TIME=FEATURE_TIME,
+            CUSTOMER_ENTITY_ID=CUSTOMER_ENTITY_ID,
+            TERMINAL_ENTITY_ID=TERMINAL_ENTITY_ID,
+        )
+        .after(ingest)
+        .set_display_name("Create Feature Store")
+    )
 
     # Ingest data from featurestore
     ingest_features_op = ingest_features_gcs(
@@ -208,36 +213,36 @@ def xgboost_pipeline(
         read_instances_uri=READ_INSTANCES_URI,
     )
 
-    # # create dataset
-    # dataset_create_op = vertex_ai_components.TabularDatasetCreateOp(
-    #     project=project_id,
-    #     display_name=DATASET_NAME,
-    #     gcs_source=ingest_features_op.outputs["snapshot_uri_paths"],
-    # ).after(ingest_features_op)
+    # create dataset
+    dataset_create_op = vertex_ai_components.TabularDatasetCreateOp(
+        project=project_id,
+        display_name=DATASET_NAME,
+        gcs_source=ingest_features_op.outputs["snapshot_uri_paths"],
+    ).after(ingest_features_op)
 
-    # # custom training job component - script
-    # train_model_op = vertex_ai_components.CustomContainerTrainingJobRunOp(
-    #     display_name=JOB_NAME,
-    #     model_display_name=MODEL_NAME,
-    #     container_uri=IMAGE_URI,
-    #     staging_bucket=staging_bucket,
-    #     dataset=dataset_create_op.outputs["dataset"],
-    #     base_output_dir=staging_bucket,
-    #     args=ARGS,
-    #     replica_count=replica_count,
-    #     machine_type=machine_type,
-    #     training_fraction_split=train_split,
-    #     validation_fraction_split=val_split,
-    #     test_fraction_split=test_split,
-    #     model_serving_container_image_uri=MODEL_SERVING_IMAGE_URI,
-    #     project=project_id,
-    #     location=project_location,
-    # ).after(dataset_create_op)
+    # custom training job component - script
+    train_model_op = vertex_ai_components.CustomContainerTrainingJobRunOp(
+        display_name=JOB_NAME,
+        model_display_name=MODEL_NAME,
+        container_uri=IMAGE_URI,
+        staging_bucket=staging_bucket,
+        dataset=dataset_create_op.outputs["dataset"],
+        base_output_dir=staging_bucket,
+        args=ARGS,
+        replica_count=replica_count,
+        machine_type=machine_type,
+        training_fraction_split=train_split,
+        validation_fraction_split=val_split,
+        test_fraction_split=test_split,
+        model_serving_container_image_uri=MODEL_SERVING_IMAGE_URI,
+        project=project_id,
+        location=project_location,
+    ).after(dataset_create_op)
 
-    # # evaluate component
-    # evaluate_model_op = evaluate_model(
-    #     model_in=train_model_op.outputs["model"], metrics_uri=METRICS_URI
-    # ).after(train_model_op)
+    # evaluate component
+    evaluate_model_op = evaluate_model(
+        model_in=train_model_op.outputs["model"], metrics_uri=METRICS_URI
+    ).after(train_model_op)
 
     # split_train_data = (
     #     bq_query_to_table(query=split_train_query, table_id=train_table, **kwargs)
@@ -349,7 +354,6 @@ def xgboost_pipeline(
 
 
 if __name__ == "__main__":
-
     compiler.Compiler().compile(
         pipeline_func=xgboost_pipeline,
         package_path="training.json",

@@ -6,4 +6,9 @@ __version__ = "0.0.1"
 __all__ = [
     "bq_query_to_table",
     "extract_bq_to_dataset",
+    "ingest_features_gcs",
+    "copy_bigquery_data_comp",    
+    "evaluate_model",    
+    "extract_bq_to_dataset",
+    "feature_engineering_comp",
 ]
