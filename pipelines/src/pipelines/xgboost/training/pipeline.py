@@ -33,8 +33,7 @@ from kfp.v2 import compiler, dsl
 from pipelines import generate_query
 from bigquery_components import (
     ingest_features_gcs,
-    evaluate_model,
-    copy_bigquery_data_comp,
+    evaluate_model,    
     extract_bq_to_dataset,
     feature_engineering_comp,
 )
@@ -167,7 +166,7 @@ def xgboost_pipeline(
     # generate sql queries which are used in ingestion and preprocessing
     # operations
 
-    queries_folder = pathlib.Path(__file__).parent / "queries"
+    # queries_folder = pathlib.Path(__file__).parent / "queries"
 
     # data ingestion and preprocessing operations
 
@@ -179,11 +178,7 @@ def xgboost_pipeline(
     #     query_job_config=json.dumps(dict(write_disposition="WRITE_TRUNCATE"))
     # )
 
-
-    # ingest = copy_bigquery_data_comp(
-    #     bucket_name=staging_bucket, destination_project_id=project_id
-    # ).set_display_name("Ingest data")
-
+ 
     # featurestore = (
     #     feature_engineering_comp(
     #         destination_project_id=project_id,
@@ -354,7 +349,7 @@ def xgboost_pipeline(
 
 
 if __name__ == "__main__":
-    
+
     compiler.Compiler().compile(
         pipeline_func=xgboost_pipeline,
         package_path="training.json",
