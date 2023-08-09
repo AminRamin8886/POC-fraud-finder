@@ -31,7 +31,13 @@ from typing import List, Union
 
 from kfp.v2 import compiler, dsl
 from pipelines import generate_query
-from bigquery_components import ingest_features_gcs, evaluate_model, copy_bigquery_data_comp, extract_bq_to_dataset, feature_engineering_comp
+from bigquery_components import (
+    ingest_features_gcs,
+    evaluate_model,
+    copy_bigquery_data_comp,
+    extract_bq_to_dataset,
+    feature_engineering_comp,
+)
 from vertex_components import (
     lookup_model,
     custom_train_job,
@@ -39,7 +45,6 @@ from vertex_components import (
     update_best_model,
 )
 from google_cloud_pipeline_components import aiplatform as vertex_ai_components
-
 
 
 @dsl.pipeline(name="xgboost-train-pipeline")
@@ -105,7 +110,6 @@ def xgboost_pipeline(
         label=label_column_name,
     )
 
-   
     ID = "".join(random.choices(string.ascii_lowercase + string.digits, k=5))
     FEATURESTORE_ID = "fraudfinder_{ID}"
     YESTERDAY = datetime.today() - timedelta(days=1)
@@ -121,7 +125,7 @@ def xgboost_pipeline(
     # Define Vertex AI Feature store settings.
     CUSTOMERS_TABLE_NAME = f"customers_{DATAPROCESSING_END_DATE.replace('-', '')}"
     CUSTOMERS_BQ_TABLE_URI = f"{project_id}.tx.{CUSTOMERS_TABLE_NAME}"
-    TERMINALS_TABLE_NAME = f"terminals_{DATAPROCESSING_END_DATE.replace('-', '')}"                    
+    TERMINALS_TABLE_NAME = f"terminals_{DATAPROCESSING_END_DATE.replace('-', '')}"
     TERMINALS_BQ_TABLE_URI = f"{project_id}.tx.{TERMINALS_TABLE_NAME}"
     ONLINE_STORAGE_NODES = 1
     FEATURE_TIME = "feature_ts"
@@ -135,7 +139,7 @@ def xgboost_pipeline(
 
     # Dataset component variables
     DATASET_NAME = f"fraud_finder_dataset_{ID}"
-    
+
     # Training component variables
     JOB_NAME = f"fraudfinder-train-xgb-{ID}"
     MODEL_NAME = f"ff_model_xgb_pipeline_{ID}"
@@ -154,7 +158,6 @@ def xgboost_pipeline(
     AVG_PR_THRESHOLD = 0.2
     AVG_PR_CONDITION = "avg_pr_condition"
 
-
     replica_count = 1
     machine_type = "n1-standard-4"
     train_split = 0.8
@@ -166,7 +169,6 @@ def xgboost_pipeline(
 
     queries_folder = pathlib.Path(__file__).parent / "queries"
 
-    
     # data ingestion and preprocessing operations
 
     # kwargs = dict(
@@ -177,29 +179,30 @@ def xgboost_pipeline(
     #     query_job_config=json.dumps(dict(write_disposition="WRITE_TRUNCATE"))
     # )
     ingest = copy_bigquery_data_comp(
-        staging_bucket, project_id
-        ).set_display_name("Ingest data")
+        bucket_name=staging_bucket, destination_project_id=project_id
+    ).set_display_name("Ingest data")
 
-    featurestore  = (
-        feature_engineering_comp( project_id, project_location, staging_bucket,
-        FEATURESTORE_ID,
-        DATAPROCESSING_END_DATE,    
-        RAW_BQ_TRANSACTION_TABLE_URI,
-        RAW_BQ_LABELS_TABLE_URI,    
-        CUSTOMERS_BQ_TABLE_URI,
-        TERMINALS_BQ_TABLE_URI,
-        ONLINE_STORAGE_NODES ,
-        FEATURE_TIME,
-        CUSTOMER_ENTITY_ID,
-        TERMINAL_ENTITY_ID)
+    featurestore = (
+        feature_engineering_comp(
+            destination_project_id=project_id,
+            REGION=project_location,
+            BUCKET_NAME=staging_bucket,
+            FEATURESTORE_ID=FEATURESTORE_ID,
+            DATAPROCESSING_END_DATE=DATAPROCESSING_END_DATE,
+            RAW_BQ_TRANSACTION_TABLE_URI=RAW_BQ_TRANSACTION_TABLE_URI,
+            RAW_BQ_LABELS_TABLE_URI=RAW_BQ_LABELS_TABLE_URI,
+            CUSTOMERS_BQ_TABLE_URI=CUSTOMERS_BQ_TABLE_URI,
+            TERMINALS_BQ_TABLE_URI=TERMINALS_BQ_TABLE_URI,
+            ONLINE_STORAGE_NODES=ONLINE_STORAGE_NODES,
+            FEATURE_TIME=FEATURE_TIME,
+            CUSTOMER_ENTITY_ID=CUSTOMER_ENTITY_ID,
+            TERMINAL_ENTITY_ID=TERMINAL_ENTITY_ID,
+        )
         .after(ingest)
         .set_display_name("Create Feature Store")
     )
 
-
-
-
-     # Ingest data from featurestore
+    # Ingest data from featurestore
     ingest_features_op = ingest_features_gcs(
         project_id=project_id,
         region=project_location,
