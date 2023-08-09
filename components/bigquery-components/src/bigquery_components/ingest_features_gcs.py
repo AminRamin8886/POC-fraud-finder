@@ -2,7 +2,6 @@
 # Vertex Pipelines
 from typing import NamedTuple
 
-from kfp.v2 import dsl
 from kfp.v2.dsl import (   
     component
 )
@@ -13,8 +12,8 @@ from google_cloud_pipeline_components import aiplatform as vertex_ai_components
 from kfp.v2.google.client import AIPlatformClient as VertexAIClient
 
 
-
-@component(    
+ 
+@component(
     base_image="python:3.7",
     packages_to_install=["google-cloud-aiplatform==1.21.0"],
 )
