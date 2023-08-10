@@ -36,7 +36,7 @@ steps:
     args:
       - -c
       - |
-        cd pipelines\src && \        
+        cd pipelines/src && \        
         ls && \        
         mkdir -p ${TAG_NAME}/training/assets && \
         cp training.json ${TAG_NAME}/training/training.json && \
