@@ -36,16 +36,13 @@ steps:
     args:
       - -c
       - |
-        echo ${TAG_NAME}
         cd pipelines/src && \        
         ls && \        
-        mkdir -p ${TAG_NAME}/training/assets && \
-        cp training.json ${TAG_NAME}/training/training.json && \
-        cd ${TAG_NAME} && \
-        ls && \        
-        cp -r pipelines/${_PIPELINE_TEMPLATE}/training/assets ${TAG_NAME}/training/ && \
+        mkdir -p output/training/assets && \
+        cp training.json output/training/training.json && \               
+        cp -r pipelines/${_PIPELINE_TEMPLATE}/training/assets output/training/ && \
         for dest in ${_PIPELINE_PUBLISH_GCS_PATHS} ; do \
-          gsutil cp -r ${TAG_NAME} $$dest ; \
+          gsutil cp -r output $$dest ; \
         done
 # images: ['us-central1-docker.pkg.dev/$PROJECT_ID/fraudfinder-$PROJECT_ID/dask-xgb-classificator:latest']
 options:
