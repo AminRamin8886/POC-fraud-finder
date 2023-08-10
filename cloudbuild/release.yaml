@@ -49,9 +49,7 @@ steps:
         ls && \
         dirname=`date '+%Y%m%d%H%M%S'` && \                
         mkdir -p $dirname/training/assets && \
-        cp training.json $dirname/training/training.json && \
-        cd $dirname && \
-        ls && \        
+        cp training.json $dirname/training/training.json && \        
         cp -r pipelines/${_PIPELINE_TEMPLATE}/training/assets $dirname/training/ && \
         for dest in ${_PIPELINE_PUBLISH_GCS_PATHS} ; do \
           gsutil cp -r $dirname $$dest ; \
