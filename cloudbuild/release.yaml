@@ -27,7 +27,7 @@ steps:
       - |
         cd pipelines/src && \        
         ls && \
-        dirname="date +%Y%m%d%H%M%S" && \                
+        dirname=`date '+%Y%m%d%H%M%S'` && \                
         mkdir -p $dirname/training/assets && \
         cp training.json $dirname/training/training.json && \
         cd $dirname && \
