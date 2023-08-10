@@ -42,14 +42,7 @@ def feature_engineering_comp(
     TERMINAL_ENTITY_ID = "terminal"
 
 ) -> None:
-    """
-    Run query & create a new BigQuery table
-    Args:    
-        destination_project_id (str): project id where BQ table will be created        
-
-    Returns:
-        None
-    """
+    
     from google.cloud.exceptions import GoogleCloudError
     
     import logging
