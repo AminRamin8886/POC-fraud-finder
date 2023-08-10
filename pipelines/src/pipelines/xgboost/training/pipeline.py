@@ -190,17 +190,17 @@ def xgboost_pipeline(
 
     logging.info(logmsg)
 
-    featurestore = feature_engineering_comp(
-        destination_project_id=project_id,
-        REGION_NM="us-central1",
-        BUCKET_NAME=staging_bucket,
-        FEATURESTORE_ID=FEATURESTORE_ID,
-        DATAPROCESSING_END_DATE=DATAPROCESSING_END_DATE,
-        RAW_BQ_TRANSACTION_TABLE_URI=RAW_BQ_TRANSACTION_TABLE_URI,
-        RAW_BQ_LABELS_TABLE_URI=RAW_BQ_LABELS_TABLE_URI,
-        CUSTOMERS_BQ_TABLE_URI=CUSTOMERS_BQ_TABLE_URI,
-        TERMINALS_BQ_TABLE_URI=TERMINALS_BQ_TABLE_URI,
-        ONLINE_STORAGE_NODES=ONLINE_STORAGE_NODES).after(ingest)
+    # featurestore = feature_engineering_comp(
+    #     destination_project_id=project_id,
+    #     REGION_NM="us-central1",
+    #     BUCKET_NAME=staging_bucket,
+    #     FEATURESTORE_ID=FEATURESTORE_ID,
+    #     DATAPROCESSING_END_DATE=DATAPROCESSING_END_DATE,
+    #     RAW_BQ_TRANSACTION_TABLE_URI=RAW_BQ_TRANSACTION_TABLE_URI,
+    #     RAW_BQ_LABELS_TABLE_URI=RAW_BQ_LABELS_TABLE_URI,
+    #     CUSTOMERS_BQ_TABLE_URI=CUSTOMERS_BQ_TABLE_URI,
+    #     TERMINALS_BQ_TABLE_URI=TERMINALS_BQ_TABLE_URI,
+    #     ONLINE_STORAGE_NODES=ONLINE_STORAGE_NODES).after(ingest)
 
     # Ingest data from featurestore
     ingest_features_op = ingest_features_gcs(
@@ -209,7 +209,7 @@ def xgboost_pipeline(
         bucket_name=staging_bucket,
         feature_store_id=FEATURESTORE_ID,
         read_instances_uri=READ_INSTANCES_URI,
-    ).after(featurestore)
+    )
 
     # create dataset
     dataset_create_op = vertex_ai_components.TabularDatasetCreateOp(
