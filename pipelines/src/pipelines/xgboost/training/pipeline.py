@@ -189,22 +189,22 @@ def xgboost_pipeline(
 
     logging.info(logmsg)
 
-    featurestore = (
-        feature_engineering_comp(
-            destination_project_id=project_id,
-            REGION_NM=project_location,
-            BUCKET_NAME=staging_bucket,
-            FEATURESTORE_ID=FEATURESTORE_ID,
-            DATAPROCESSING_END_DATE=DATAPROCESSING_END_DATE,
-            RAW_BQ_TRANSACTION_TABLE_URI=RAW_BQ_TRANSACTION_TABLE_URI,
-            RAW_BQ_LABELS_TABLE_URI=RAW_BQ_LABELS_TABLE_URI,
-            CUSTOMERS_BQ_TABLE_URI=CUSTOMERS_BQ_TABLE_URI,
-            TERMINALS_BQ_TABLE_URI=TERMINALS_BQ_TABLE_URI,
-            ONLINE_STORAGE_NODES=ONLINE_STORAGE_NODES,
-        )
-        .after(ingest)
-        .set_display_name("Create Feature Store")
-    )
+    # featurestore = (
+    #     feature_engineering_comp(
+    #         destination_project_id=project_id,
+    #         REGION_NM=project_location,
+    #         BUCKET_NAME=staging_bucket,
+    #         FEATURESTORE_ID=FEATURESTORE_ID,
+    #         DATAPROCESSING_END_DATE=DATAPROCESSING_END_DATE,
+    #         RAW_BQ_TRANSACTION_TABLE_URI=RAW_BQ_TRANSACTION_TABLE_URI,
+    #         RAW_BQ_LABELS_TABLE_URI=RAW_BQ_LABELS_TABLE_URI,
+    #         CUSTOMERS_BQ_TABLE_URI=CUSTOMERS_BQ_TABLE_URI,
+    #         TERMINALS_BQ_TABLE_URI=TERMINALS_BQ_TABLE_URI,
+    #         ONLINE_STORAGE_NODES=ONLINE_STORAGE_NODES,
+    #     )
+    #     .after(ingest)
+    #     .set_display_name("Create Feature Store")
+    # )
 
     # Ingest data from featurestore
     ingest_features_op = ingest_features_gcs(

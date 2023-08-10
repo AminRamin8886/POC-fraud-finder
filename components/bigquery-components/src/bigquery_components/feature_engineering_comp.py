@@ -14,10 +14,10 @@
 
 from kfp.v2.dsl import component
 from typing import Union
-import pandas as pd
 from google.cloud import aiplatform as vertex_ai
 from google.cloud import bigquery
 from google.cloud.aiplatform import EntityType, Feature, Featurestore
+import pandas as pd
 
 # Define the date range of transactions for feature engineering (last 10 days up until yesterday)
 
