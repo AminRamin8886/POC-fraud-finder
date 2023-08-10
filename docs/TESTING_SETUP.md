@@ -53,7 +53,7 @@ Two buckets will need to be created - one for publishing the compiled JSON pipel
 
 ```
 gsutil mb -l ${GCP_REGION} -p ${GCP_PROJECT_ID} gs://${GCP_PROJECT_ID}-pl-root
-gsutil mb -l ${GCP_REGION} -p ${GCP_PROJECT_ID} gs://${GCP_PROJECT_ID}-assets 
+gsutil mb -l ${GCP_REGION} -p ${GCP_PROJECT_ID} gs://${GCP_PROJECT_ID}-pl-assets 
 ```
 
 ### BigQuery 
@@ -140,11 +140,11 @@ gcloud projects add-iam-policy-binding $GCP_PROJECT_ID --member="serviceAccount:
 The Vertex Pipelines service account requires read access to the assets bucket, read/write access to the pipeline root bucket, and access to list both buckets:
 
 ```
-gsutil iam ch serviceAccount:vertex-pipelines@${GCP_PROJECT_ID}.iam.gserviceaccount.com:objectViewer gs://${GCP_PROJECT_ID}-assets
+gsutil iam ch serviceAccount:vertex-pipelines@${GCP_PROJECT_ID}.iam.gserviceaccount.com:objectViewer gs://${GCP_PROJECT_ID}-pl-assets
 
 gsutil iam ch serviceAccount:vertex-pipelines@${GCP_PROJECT_ID}.iam.gserviceaccount.com:objectAdmin gs://${GCP_PROJECT_ID}-pl-root
 
-gsutil iam ch serviceAccount:vertex-pipelines@${GCP_PROJECT_ID}.iam.gserviceaccount.com:legacyBucketReader gs://${GCP_PROJECT_ID}-assets
+gsutil iam ch serviceAccount:vertex-pipelines@${GCP_PROJECT_ID}.iam.gserviceaccount.com:legacyBucketReader gs://${GCP_PROJECT_ID}-pl-assets
 
 gsutil iam ch serviceAccount:vertex-pipelines@${GCP_PROJECT_ID}.iam.gserviceaccount.com:legacyBucketReader gs://${GCP_PROJECT_ID}-pl-root
 ```
