@@ -37,8 +37,9 @@ steps:
       - -c
       - |
         cd pipelines && \
+        cd src && \        
         ls && \
-        cd src/pipelines/${_PIPELINE_TEMPLATE}/training && \
+        cd pipelines && \
         ls && \
         mkdir -p ${TAG_NAME}/training/assets && \
         cp pipelines/training.json ${TAG_NAME}/training/training.json && \
